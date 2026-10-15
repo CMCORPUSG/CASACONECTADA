@@ -1,0 +1,32 @@
+name: Android CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Instalar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Configurar Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Instalar SDK 35
+        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Permiso Gradle Wrapper
+        run: chmod +x ./gradlew
+      - name: Compilar y probar base
+        run: ./gradlew testDebugUnitTest assembleDebug --stacktrace
+      - name: Adjuntar APK debug
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: CasaConectada-debug
+          path: app/build/outputs/apk/debug/app-debug.apk

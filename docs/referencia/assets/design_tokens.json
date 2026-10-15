@@ -1,0 +1,15 @@
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "name": "Casa Conectada / Premium fácil / Light v2",
+  "color": {
+    "brand": {"primary":"#087F72","hover":"#076B61","gradientStart":"#0B806F","gradientEnd":"#115B5B"},
+    "surface": {"background":"#F5F8F5","canvas":"#F9FBF8","card":"#FFFFFF","border":"#E3ECE8"},
+    "text": {"primary":"#173242","secondary":"#617D81"},
+    "semantic": {"success":"#087F72","pending":"#B77D38","goal":"#7C68BC"},
+    "accent": {"mint":"#DCF5EB","lavender":"#EEE9FF","peach":"#FFE4D8","cream":"#FFF0D9"}
+  },
+  "typography": {"family":"Inter, Segoe UI, sans-serif","mobileTitlePx":27,"bodyPx":15,"buttonPx":14,"captionPx":12},
+  "touch": {"minTapTargetPx":44,"recommendedPx":48},
+  "shape": {"cardRadiusPx":20,"primaryButtonRadiusPx":15,"quickActionRadiusPx":17},
+  "principles":["Una acción clara por tarjeta","Etiquetas cortas","Iconos más texto","Sin pantallas saturadas","Legible para toda la familia"]
+}

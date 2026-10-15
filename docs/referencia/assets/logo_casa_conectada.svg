@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Casa Conectada: casa y marca de verificación">
+<defs><linearGradient id="jade" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#149C86"/><stop offset="1" stop-color="#087F72"/></linearGradient><linearGradient id="light" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#F5FFF9"/><stop offset="1" stop-color="#D9F9E9"/></linearGradient></defs>
+<rect x="10" y="10" width="492" height="492" rx="120" fill="url(#jade)"/>
+<circle cx="416" cy="94" r="105" fill="#FFFFFF" opacity=".055"/>
+<path d="M110 233 245 126a18 18 0 0 1 22 0l135 107" fill="none" stroke="url(#light)" stroke-width="31" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M148 232v136c0 16 13 29 29 29h158c16 0 29-13 29-29V232" fill="none" stroke="url(#light)" stroke-width="31" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="m209 305 37 36 63-70" fill="none" stroke="#fff" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="364" cy="160" r="17" fill="#C1F5DA"/>
+</svg>

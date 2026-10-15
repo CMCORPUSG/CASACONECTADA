@@ -1,0 +1,8 @@
+<resources>
+    <style name="Theme.CasaConectada" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">#F9FBF8</item>
+        <item name="android:navigationBarColor">#F9FBF8</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowActionModeOverlay">true</item>
+    </style>
+</resources>
