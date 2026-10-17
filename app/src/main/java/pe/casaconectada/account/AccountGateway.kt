@@ -93,6 +93,17 @@ private fun AccountPilotScreen(state: AccountState, vm: AccountViewModel, onLoca
                     }
                 }
             } else {
+                InfoCard {
+                    Text("Organizacion del hogar", fontWeight = FontWeight.Bold, color = Ink)
+                    Text("Accede a tareas, calendario, finanzas, metas y familia guardados en este telefono. No estan sincronizados ni separados por cuenta todavia.",
+                        color = Muted, fontSize = 12.sp)
+                    Button(onClick = onLocalMode, modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = Jade)) {
+                        Icon(Icons.Outlined.Home, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Abrir mÃ³dulos locales")
+                    }
+                }
                 AccountDashboard(state, vm)
             }
             Text("FASE ANDROID LOCAL · Requiere Wrangler y adb reverse TCP 8787. " +
