@@ -16,3 +16,21 @@ key.properties
 *.pem
 *.p12
 *.pfx
+backend/.dev.vars
+backend/.wrangler/
+backend/node_modules/
+# CASA CONECTADA - datos privados y artefactos locales
+backend/.dev.vars.*
+**/.env
+**/.env.*
+**/node_modules/
+**/.wrangler/
+*.sqlite
+*.sqlite3
+*.db
+*.db-wal
+*.db-shm
+*.key
+*.bak_visual
+
+backend/worker-configuration.d.ts

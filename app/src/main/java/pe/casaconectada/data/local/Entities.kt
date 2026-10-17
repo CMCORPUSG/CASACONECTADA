@@ -4,7 +4,16 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 @Entity(tableName = "members")
-data class MemberEntity(@PrimaryKey val id: String, val name: String, val points: Int = 0)
+data class MemberEntity(
+    @PrimaryKey val id: String,
+    val name: String,
+    val points: Int = 0,
+    val alias: String = "",
+    val phone: String = "",
+    val email: String = "",
+    val notes: String = "",
+    val photoPath: String? = null,
+)
 
 @Entity(tableName = "tasks")
 data class TaskEntity(

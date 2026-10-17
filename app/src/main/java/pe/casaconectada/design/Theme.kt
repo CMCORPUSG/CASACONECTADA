@@ -6,13 +6,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 val Jade = Color(0xFF087F72)
-val Mint = Color(0xFFDCF5EB)
-val Ivory = Color(0xFFF9FBF8)
+val Mint = Color(0xFFD5F5E9)
+val Ivory = Color(0xFFF7FAF9)
 val Ink = Color(0xFF173242)
 val Muted = Color(0xFF617D81)
 val Line = Color(0xFFE3ECE8)
-val Peach = Color(0xFFFFE4D8)
-val Lavender = Color(0xFFEEE9FF)
+val Peach = Color(0xFFFFD6C1)
+val Lavender = Color(0xFFE9E8FF)
 
 private val CasaColors = lightColorScheme(
     primary = Jade,

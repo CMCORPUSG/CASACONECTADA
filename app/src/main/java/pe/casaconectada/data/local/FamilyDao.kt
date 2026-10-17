@@ -29,6 +29,9 @@ interface FamilyDao {
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun addMember(entity: MemberEntity)
 
+    @Query("UPDATE members SET name = :name, alias = :alias, phone = :phone, email = :email, notes = :notes, photoPath = :photoPath WHERE id = :id")
+    suspend fun updateMember(id: String, name: String, alias: String, phone: String, email: String, notes: String, photoPath: String?): Int
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun addTask(entity: TaskEntity)
 

@@ -4,6 +4,11 @@ data class FamilyMember(
     val id: String,
     val name: String,
     val points: Int = 0,
+    val alias: String = "",
+    val phone: String = "",
+    val email: String = "",
+    val notes: String = "",
+    val photoPath: String? = null,
 )
 
 data class TaskItem(
