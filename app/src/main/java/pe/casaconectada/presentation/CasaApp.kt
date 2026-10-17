@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -72,6 +73,10 @@ fun CasaApp(vm: FamilyViewModel) {
     var section by rememberSaveable { mutableStateOf(Section.INICIO) }
     var dialog by rememberSaveable { mutableStateOf("") }
     var selectedGoalId by rememberSaveable { mutableStateOf("") }
+    var selectedMemberId by rememberSaveable { mutableStateOf("") }
+    val selectedMember = members.firstOrNull { it.id == selectedMemberId }
+        ?: members.firstOrNull()
+
     var taskToPhotograph by remember { mutableStateOf("") }
     var paymentToPhotograph by remember { mutableStateOf("") }
     val taskPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { photo: Uri? ->
@@ -88,7 +93,7 @@ fun CasaApp(vm: FamilyViewModel) {
     Scaffold(
         containerColor = Ivory,
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        topBar = { CasaTopBar(section.label) },
+        topBar = { CasaTopBar(section.label, selectedMember) { section = Section.FAMILIA } },
         bottomBar = {
             NavigationBar(containerColor = Color.White, tonalElevation = 1.dp) {
                 val nav = listOf(
@@ -102,9 +107,15 @@ fun CasaApp(vm: FamilyViewModel) {
                 nav.forEach { (s, icon) ->
                     NavigationBarItem(selected = section == s, onClick = { section = s },
                         icon = { Icon(icon, contentDescription = s.label) },
-                        label = { Text(s.label, fontSize = 9.sp, maxLines = 1) },
+                        label = { Text(s.label, fontSize = 10.sp, fontWeight = if (section == s) FontWeight.Bold else FontWeight.Normal, maxLines = 1) },
                         alwaysShowLabel = true,
-                        colors = NavigationBarItemDefaults.colors(selectedIconColor = Jade, indicatorColor = Mint))
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = Jade,
+                            selectedTextColor = Jade,
+                            unselectedIconColor = Muted,
+                            unselectedTextColor = Muted,
+                            indicatorColor = Mint
+                        ))
                 }
             }
         },
@@ -127,13 +138,25 @@ fun CasaApp(vm: FamilyViewModel) {
                 Section.METAS -> MetasScreen(goals, contributions,
                     onAdd = { dialog = "goal" },
                     onOpen = { selectedGoalId = it; dialog = "goalDetail" })
-                Section.FAMILIA -> FamiliaScreen(members, tasks, onAdd = { dialog = "member" })
+                Section.FAMILIA -> FamiliaScreen(members, tasks,
+                    selectedMemberId = selectedMember?.id.orEmpty(),
+                    onAdd = { dialog = "member" },
+                    onSelect = { selectedMemberId = it },
+                    onEdit = { selectedMemberId = it; dialog = "memberProfile" })
             }
         }
     }
 
     when (dialog) {
         "member" -> MemberDialog(onDismiss = { dialog = "" }, onSave = { vm.addMember(it); dialog = "" })
+        "memberProfile" -> members.firstOrNull { it.id == selectedMemberId }?.let { person ->
+            MemberProfileDialog(person,
+                onDismiss = { dialog = "" },
+                onSave = { name, alias, phone, email, notes, photo ->
+                    vm.saveMemberProfile(person, name, alias, phone, email, notes, photo)
+                    dialog = ""
+                })
+        }
         "task" -> TaskDialog(members, onDismiss = { dialog = "" }, onSave = { name, who, date, repeat ->
             vm.addTask(name, who, date, repeat); dialog = "" })
         "entry" -> EntryDialog(onDismiss = { dialog = "" }, onSave = { name, cents, date, kind ->
@@ -165,9 +188,16 @@ fun CasaApp(vm: FamilyViewModel) {
 }
 
 @Composable
-private fun CasaTopBar(sectionName: String) {
-    Row(Modifier.fillMaxWidth().background(Ivory).padding(horizontal = 18.dp, vertical = 10.dp),
-        horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+private fun CasaTopBar(sectionName: String, activeMember: FamilyMember?, onProfile: () -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .background(Ivory)
+            .statusBarsPadding()
+            .padding(start = 18.dp, end = 18.dp, top = 14.dp, bottom = 14.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(9.dp)) {
             Image(painterResource(R.mipmap.ic_launcher), contentDescription = "Logo Casa Conectada",
                 modifier = Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)))
@@ -176,8 +206,8 @@ private fun CasaTopBar(sectionName: String) {
                 Text(sectionName, color = Muted, fontSize = 11.sp)
             }
         }
-        Surface(color = Mint, shape = CircleShape) {
-            Text("YO", Modifier.padding(10.dp), color = Jade, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+        Surface(onClick = onProfile, color = Peach, shape = CircleShape, tonalElevation = 3.dp) {
+            ProfileAvatar(activeMember, 42.dp)
         }
     }
     HorizontalDivider(color = Line)
@@ -192,17 +222,62 @@ private fun Intro(kicker: String, title: String, description: String, action: St
             Text(title, fontWeight = FontWeight.ExtraBold, fontSize = 28.sp, color = Ink, lineHeight = 32.sp)
             Text(description, color = Muted, fontSize = 13.sp, modifier = Modifier.padding(top = 5.dp))
         }
-        if (action != null) Button(onClick = onAction, shape = RoundedCornerShape(13.dp)) {
-            Icon(Icons.Outlined.Add, contentDescription = null, modifier = Modifier.size(17.dp))
-            Text(action, fontSize = 12.sp)
+        if (action != null) Button(
+            onClick = onAction,
+            shape = RoundedCornerShape(15.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Jade, contentColor = Color.White),
+            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 11.dp)
+        ) {
+            Icon(Icons.Outlined.AddCircleOutline, contentDescription = null, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(5.dp))
+            Text(action, fontSize = 12.sp, fontWeight = FontWeight.Bold)
         }
     }
-    Spacer(Modifier.height(23.dp))
+    val visual = when (title) {
+        "Tareas" -> R.drawable.cc_illustration_tasks
+        "Calendario" -> R.drawable.cc_illustration_calendar
+        "Pagos y gastos" -> R.drawable.cc_illustration_finances
+        "Nuestros ahorros" -> R.drawable.cc_illustration_goals
+        "Mi familia" -> R.drawable.cc_illustration_family
+        else -> null
+    }
+    if (visual != null) {
+        Spacer(Modifier.height(14.dp))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(118.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .background(Brush.horizontalGradient(listOf(Mint, Lavender))),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(Modifier.weight(1f).padding(start = 15.dp)) {
+                Text("TU HOGAR, MEJOR ORGANIZADO", color = Jade,
+                    fontSize = 9.sp, fontWeight = FontWeight.ExtraBold, maxLines = 2)
+                Spacer(Modifier.height(7.dp))
+                Text(when (title) {
+                    "Tareas" -> "Todo al día"
+                    "Calendario" -> "Cada fecha cuenta"
+                    "Pagos y gastos" -> "Tus cuentas claras"
+                    "Nuestros ahorros" -> "Juntos llegamos más lejos"
+                    else -> "Nuestro equipo"
+                }, fontSize = 15.sp, lineHeight = 19.sp, fontWeight = FontWeight.ExtraBold, color = Ink)
+            }
+            Image(
+                painter = painterResource(visual),
+                contentDescription = "Ilustración tridimensional de $title",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.width(136.dp).fillMaxHeight()
+            )
+        }
+    }
+    Spacer(Modifier.height(20.dp))
 }
 
 @Composable
 private fun InfoPanel(content: @Composable ColumnScope.() -> Unit) {
     Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = rounded,
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         border = BorderStroke(1.dp, Line), modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(17.dp), content = content)
     }
@@ -236,32 +311,65 @@ private fun InicioScreen(tasks: List<TaskItem>, entries: List<MoneyEntry>, goals
     val pending = tasks.count { it.status != "COMPLETADA" }
     val completed = tasks.count { it.status == "COMPLETADA" }
     val progress = if (tasks.isEmpty()) 0f else completed.toFloat() / tasks.size
-    LazyColumn(contentPadding = PaddingValues(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    LazyColumn(contentPadding = PaddingValues(start = 18.dp, top = 22.dp, end = 18.dp, bottom = 34.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             Intro("Hoy en casa", "Hola, familia 👋", "Aquí está lo importante de hoy.")
-            Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(23.dp))
-                .background(Brush.horizontalGradient(listOf(Color(0xFF0B8578), Color(0xFF115B5B)))).padding(25.dp)) {
+            Box(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(26.dp))
+                    .background(Brush.horizontalGradient(listOf(Color(0xFF087F72), Color(0xFF244E73))))
+                    .padding(20.dp)
+            ) {
                 Column {
-                    Text("HOY EN CASA", color = Mint, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                    Spacer(Modifier.height(9.dp))
-                    Text("$pending tareas\npendientes", color = Color.White, fontSize = 25.sp,
-                        fontWeight = FontWeight.ExtraBold, lineHeight = 28.sp)
-                    Text("¡Vamos en equipo!", color = Mint, fontSize = 12.sp, modifier = Modifier.padding(vertical = 7.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Column(Modifier.weight(1f)) {
+                            Text("HOY EN CASA", color = Mint, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            Spacer(Modifier.height(8.dp))
+                            Text("$pending tareas pendientes", color = Color.White, fontSize = 25.sp,
+                                fontWeight = FontWeight.ExtraBold, lineHeight = 29.sp)
+                            Spacer(Modifier.height(6.dp))
+                            Text("¡Vamos en equipo!", color = Color.White.copy(alpha = .88f), fontSize = 12.sp)
+                        }
+                        Image(
+                            painter = painterResource(R.drawable.cc_illustration_home),
+                            contentDescription = "Casa moderna, ilustración 3D",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.size(width = 107.dp, height = 116.dp)
+                                .clip(RoundedCornerShape(18.dp))
+                        )
+                    }
+                    Spacer(Modifier.height(15.dp))
                     LinearProgressIndicator(progress = { progress }, color = Color(0xFFC1F5DA),
-                        trackColor = Color.White.copy(alpha = .3f), modifier = Modifier.fillMaxWidth().padding(vertical = 11.dp))
-                    Button(onClick = onTask, colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Jade)) {
-                        Text("Ver mis tareas")
+                        trackColor = Color.White.copy(alpha = .24f),
+                        modifier = Modifier.fillMaxWidth().height(7.dp).clip(CircleShape))
+                    Spacer(Modifier.height(16.dp))
+                    Button(onClick = onTask, shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Jade)) {
+                        Icon(Icons.Outlined.TaskAlt, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(7.dp))
+                        Text("Ver mis tareas", fontWeight = FontWeight.Bold)
                     }
                 }
             }
         }
         item {
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedButton(onClick = onNewTask, modifier = Modifier.weight(1f)) {
-                    Icon(Icons.Outlined.Add, null, Modifier.size(17.dp)); Text("Nueva tarea", fontSize = 11.sp)
+                Button(onClick = onNewTask, modifier = Modifier.weight(1f).heightIn(min = 50.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Jade, contentColor = Color.White),
+                    contentPadding = PaddingValues(horizontal = 8.dp)) {
+                    Icon(Icons.Outlined.AddTask, contentDescription = null, modifier = Modifier.size(17.dp))
+                    Spacer(Modifier.width(5.dp))
+                    Text("Nueva tarea", fontWeight = FontWeight.Bold, fontSize = 11.sp)
                 }
-                OutlinedButton(onClick = onNewPayment, modifier = Modifier.weight(1f)) {
-                    Icon(Icons.Outlined.ReceiptLong, null, Modifier.size(16.dp)); Text("Nuevo pago", fontSize = 11.sp)
+                FilledTonalButton(onClick = onNewPayment, modifier = Modifier.weight(1f).heightIn(min = 50.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.filledTonalButtonColors(containerColor = Peach, contentColor = Ink),
+                    contentPadding = PaddingValues(horizontal = 8.dp)) {
+                    Icon(Icons.Outlined.AccountBalanceWallet, contentDescription = null,
+                        modifier = Modifier.size(17.dp))
+                    Spacer(Modifier.width(5.dp))
+                    Text("Nuevo pago", fontWeight = FontWeight.Bold, fontSize = 11.sp)
                 }
             }
             if (members.isEmpty()) TextButton(onClick = onFamily) { Text("Primero, agrega integrantes de la casa") }
@@ -319,7 +427,7 @@ private fun TareasScreen(tasks: List<TaskItem>, members: List<FamilyMember>, onA
         "Hechas" -> tasks.filter { it.status == "COMPLETADA" }
         else -> tasks
     }
-    LazyColumn(contentPadding = PaddingValues(18.dp), verticalArrangement = Arrangement.spacedBy(11.dp)) {
+    LazyColumn(contentPadding = PaddingValues(start = 18.dp, top = 22.dp, end = 18.dp, bottom = 34.dp), verticalArrangement = Arrangement.spacedBy(11.dp)) {
         item {
             Intro("Mis responsabilidades", "Tareas", "Cocinar, limpiar, pasear y más.", "Crear", onAdd)
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -362,7 +470,7 @@ private fun CalendarioScreen(tasks: List<TaskItem>, entries: List<MoneyEntry>, m
     val events = (tasks.map { Triple(it.dueAt, it.title, members.find { m -> m.id == it.responsibleId }?.name ?: "Tarea") } +
         entries.filter { it.kind == "PAGO" }.map { Triple(it.dueAt, it.concept, "Pago ${amount(it.amountCents)}") })
         .sortedBy { it.first }
-    LazyColumn(contentPadding = PaddingValues(18.dp), verticalArrangement = Arrangement.spacedBy(11.dp)) {
+    LazyColumn(contentPadding = PaddingValues(start = 18.dp, top = 22.dp, end = 18.dp, bottom = 34.dp), verticalArrangement = Arrangement.spacedBy(11.dp)) {
         item { Intro("Organiza tu semana", "Calendario", "Actividades y pagos, todo en un lugar.") }
         if (events.isEmpty()) item { InfoPanel { EmptyHint("Cuando registres tareas y pagos aparecerán aquí.") } }
         events.groupBy { dayKey(it.first) }.forEach { (day, group) ->
@@ -384,7 +492,7 @@ private fun CalendarioScreen(tasks: List<TaskItem>, entries: List<MoneyEntry>, m
 private fun FinanzasScreen(entries: List<MoneyEntry>, onAdd: () -> Unit, onPay: (String) -> Unit) {
     var tab by remember { mutableStateOf("PAGO") }
     val visible = entries.filter { it.kind == tab }
-    LazyColumn(contentPadding = PaddingValues(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    LazyColumn(contentPadding = PaddingValues(start = 18.dp, top = 22.dp, end = 18.dp, bottom = 34.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
             Intro("Dinero del hogar", "Pagos y gastos", "Todo claro, sin olvidos.", "Añadir", onAdd)
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -424,7 +532,7 @@ private fun FinanzasScreen(entries: List<MoneyEntry>, onAdd: () -> Unit, onPay: 
 
 @Composable
 private fun MetasScreen(goals: List<SavingGoal>, contributions: List<Contribution>, onAdd: () -> Unit, onOpen: (String) -> Unit) {
-    LazyColumn(contentPadding = PaddingValues(18.dp), verticalArrangement = Arrangement.spacedBy(11.dp)) {
+    LazyColumn(contentPadding = PaddingValues(start = 18.dp, top = 22.dp, end = 18.dp, bottom = 34.dp), verticalArrangement = Arrangement.spacedBy(11.dp)) {
         item { Intro("Lo que queremos lograr", "Nuestros ahorros", "Metas de mes o de año.", "Crear", onAdd) }
         if (goals.isEmpty()) item { InfoPanel { EmptyHint("Aún no hay metas. Crea una para empezar.") } }
         items(goals, key = { it.id }) { goal ->
@@ -453,26 +561,110 @@ private fun MetasScreen(goals: List<SavingGoal>, contributions: List<Contributio
 }
 
 @Composable
-private fun FamiliaScreen(members: List<FamilyMember>, tasks: List<TaskItem>, onAdd: () -> Unit) {
-    LazyColumn(contentPadding = PaddingValues(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        item { Intro("Nuestro equipo", "Mi familia", "Cada persona cuenta.", "Agregar", onAdd) }
+private fun ProfileAvatar(member: FamilyMember?, diameter: androidx.compose.ui.unit.Dp = 52.dp) {
+    val photo = member?.photoPath
+    Box(Modifier.size(diameter).clip(CircleShape).background(Mint), contentAlignment = Alignment.Center) {
+        if (!photo.isNullOrBlank()) {
+            AsyncImage(model = File(photo), contentDescription = "Foto de ${member.name}",
+                contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+        } else {
+            Icon(Icons.Outlined.Person, contentDescription = "Perfil", tint = Jade,
+                modifier = Modifier.size(diameter * .52f))
+        }
+    }
+}
+
+@Composable
+private fun FamiliaScreen(members: List<FamilyMember>, tasks: List<TaskItem>,
+    selectedMemberId: String, onAdd: () -> Unit, onSelect: (String) -> Unit,
+    onEdit: (String) -> Unit) {
+    LazyColumn(contentPadding = PaddingValues(start = 18.dp, top = 22.dp, end = 18.dp, bottom = 34.dp),
+        verticalArrangement = Arrangement.spacedBy(11.dp)) {
+        item { Intro("Nuestro equipo", "Mi familia", "Cada integrante tiene su propio perfil.", "Agregar", onAdd) }
         if (members.isEmpty()) item { InfoPanel { EmptyHint("Agrega a las personas que viven en casa.") } }
         items(members, key = { it.id }) { member ->
-            InfoPanel {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Surface(shape = CircleShape, color = Mint) {
-                        Box(Modifier.size(50.dp), contentAlignment = Alignment.Center) {
-                            Text(member.name.take(2).uppercase(esPe), color = Jade, fontWeight = FontWeight.Bold)
+            val done = tasks.count { it.responsibleId == member.id && it.status == "COMPLETADA" }
+            val total = tasks.count { it.responsibleId == member.id }
+            val fraction = if (total == 0) 0f else done.toFloat() / total
+            Card(shape = rounded,
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                border = BorderStroke(1.dp, if (selectedMemberId == member.id) Jade else Line),
+                modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        ProfileAvatar(member, 58.dp)
+                        Spacer(Modifier.width(13.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(member.name, fontWeight = FontWeight.ExtraBold, color = Ink, fontSize = 16.sp)
+                            if (member.alias.isNotBlank()) Text("@${member.alias}", color = Muted, fontSize = 11.sp)
+                            Text("★ ${member.points} puntos · $done de $total tareas", color = Jade, fontSize = 11.sp)
+                        }
+                        IconButton(onClick = { onEdit(member.id) }) {
+                            Icon(Icons.Outlined.Edit, contentDescription = "Editar perfil", tint = Jade)
                         }
                     }
-                    Spacer(Modifier.width(12.dp))
-                    TwoLine(member.name, "${tasks.count { it.responsibleId == member.id && it.status == "COMPLETADA" }} tareas realizadas",
-                        Modifier.weight(1f))
-                    Text("★ ${member.points}", color = Jade, fontWeight = FontWeight.Bold)
+                    LinearProgressIndicator(progress = { fraction }, color = Jade, trackColor = Mint,
+                        modifier = Modifier.fillMaxWidth().height(7.dp).clip(CircleShape))
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically) {
+                        Text("${(fraction * 100).toInt()}% de cumplimiento", color = Muted, fontSize = 11.sp)
+                        TextButton(onClick = { onSelect(member.id) }) {
+                            Text(if (selectedMemberId == member.id) "Perfil seleccionado" else "Seleccionar perfil",
+                                color = Jade, fontSize = 11.sp)
+                        }
+                    }
                 }
             }
         }
-        item { Text("Estos son perfiles locales, no cuentas verificadas ni invitaciones remotas.", fontSize = 11.sp, color = Muted) }
+        item {
+            Text("Perfiles locales: la selección NO es un inicio de sesión ni impide que otros integrantes vean estos datos. La protección de acceso individual está pendiente.",
+                color = Muted, fontSize = 11.sp)
+        }
+    }
+}
+
+@Composable
+private fun MemberProfileDialog(member: FamilyMember, onDismiss: () -> Unit,
+    onSave: (String, String, String, String, String, Uri?) -> Unit) {
+    var name by remember(member.id) { mutableStateOf(member.name) }
+    var alias by remember(member.id) { mutableStateOf(member.alias) }
+    var phone by remember(member.id) { mutableStateOf(member.phone) }
+    var email by remember(member.id) { mutableStateOf(member.email) }
+    var notes by remember(member.id) { mutableStateOf(member.notes) }
+    var photo by remember(member.id) { mutableStateOf<Uri?>(null) }
+    val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) {
+        photo = it
+    }
+    CasaDialog("Mi perfil personal", onDismiss,
+        enabled = name.trim().length >= 2 && (email.isBlank() || android.util.Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches()),
+        onSave = { onSave(name, alias, phone, email, notes, photo) }, buttonLabel = "Guardar perfil") {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(15.dp)) {
+            Box(Modifier.size(70.dp).clip(CircleShape).background(Mint), contentAlignment = Alignment.Center) {
+                val preview = photo ?: member.photoPath?.let { Uri.fromFile(File(it)) }
+                if (preview != null) AsyncImage(model = preview, contentDescription = "Foto personal",
+                    modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                else Icon(Icons.Outlined.Person, null, tint = Jade, modifier = Modifier.size(34.dp))
+            }
+            FilledTonalButton(onClick = { photoPicker.launch("image/*") }) {
+                Icon(Icons.Outlined.PhotoCamera, null, modifier = Modifier.size(17.dp))
+                Spacer(Modifier.width(7.dp))
+                Text("Elegir foto")
+            }
+        }
+        OutlinedTextField(name, { name = it }, label = { Text("Nombre personal") },
+            singleLine = true, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(alias, { alias = it }, label = { Text("Alias (opcional)") },
+            singleLine = true, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(phone, { phone = it }, label = { Text("Teléfono (opcional)") },
+            singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+            modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(email, { email = it }, label = { Text("Correo (opcional)") },
+            singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+            modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(notes, { notes = it }, label = { Text("Información personal (opcional)") },
+            modifier = Modifier.fillMaxWidth(), maxLines = 3)
+        Text("La fotografía se guarda localmente en este celular. No compartas datos sensibles: todavía no existe autenticación por integrante.",
+            color = Muted, fontSize = 11.sp)
     }
 }
 

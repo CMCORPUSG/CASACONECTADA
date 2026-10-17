@@ -18,7 +18,7 @@ class RoomFamilyRepository @Inject constructor(
     private val cipher: SensitiveValueCipher,
 ) : FamilyRepository {
     override val members: Flow<List<FamilyMember>> = dao.observeMembers().map { list ->
-        list.map { FamilyMember(it.id, it.name, it.points) }
+        list.map { FamilyMember(it.id, it.name, it.points, it.alias, it.phone, it.email, it.notes, it.photoPath) }
     }
     override val tasks: Flow<List<TaskItem>> = dao.observeTasks().map { list ->
         list.map { TaskItem(it.id, it.title, it.responsibleId, it.dueAt, it.repeat, it.status, it.evidencePath, it.completedAt) }
@@ -43,6 +43,12 @@ class RoomFamilyRepository @Inject constructor(
 
     override suspend fun addMember(name: String) {
         dao.addMember(MemberEntity(UUID.randomUUID().toString(), name.trim()))
+    }
+    override suspend fun updateMember(member: FamilyMember) {
+        require(dao.updateMember(member.id, member.name, member.alias, member.phone,
+            member.email, member.notes, member.photoPath) == 1) {
+            "El integrante no existe"
+        }
     }
     override suspend fun addTask(task: TaskItem) {
         dao.addTask(TaskEntity(task.id, task.title, task.responsibleId, task.dueAt, task.repeat, task.status, task.evidencePath, task.completedAt))

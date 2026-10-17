@@ -13,6 +13,7 @@ interface FamilyRepository {
     val methods: Flow<List<GoalMethod>>
 
     suspend fun addMember(name: String)
+    suspend fun updateMember(member: FamilyMember)
     suspend fun addTask(task: TaskItem)
     suspend fun completeTask(id: String, evidencePath: String)
     suspend fun addEntry(entry: MoneyEntry)

@@ -10,6 +10,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import pe.casaconectada.data.local.FamilyDao
 import pe.casaconectada.data.local.FamilyDatabase
+import pe.casaconectada.data.local.MIGRATION_1_2
 import pe.casaconectada.data.repository.RoomFamilyRepository
 import pe.casaconectada.domain.repository.FamilyRepository
 import javax.inject.Singleton
@@ -26,6 +27,7 @@ object DatabaseModule {
     @Provides @Singleton
     fun provideDatabase(@ApplicationContext context: Context): FamilyDatabase =
         Room.databaseBuilder(context, FamilyDatabase::class.java, "casa_conectada.db")
+            .addMigrations(MIGRATION_1_2)
             .build()
 
     @Provides fun provideDao(database: FamilyDatabase): FamilyDao = database.dao()

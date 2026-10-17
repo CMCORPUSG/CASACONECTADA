@@ -37,6 +37,17 @@ class FamilyViewModel @Inject constructor(
         if (name.isBlank()) return
         perform("Integrante agregado") { repository.addMember(name) }
     }
+    fun saveMemberProfile(member: FamilyMember, name: String, alias: String,
+        phone: String, email: String, notes: String, photo: Uri?) {
+        if (name.isBlank()) return
+        perform("Perfil actualizado") {
+            val photoPath = photo?.let { photos.save(it) } ?: member.photoPath
+            repository.updateMember(member.copy(
+                name = name.trim(), alias = alias.trim(), phone = phone.trim(),
+                email = email.trim(), notes = notes.trim(), photoPath = photoPath
+            ))
+        }
+    }
     fun addTask(title: String, responsibleId: String, dueAt: Long, repeat: String) {
         if (title.isBlank() || responsibleId.isBlank()) return
         perform("Tarea creada") {
