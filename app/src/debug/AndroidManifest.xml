@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- SOLO debug. HTTP permitido únicamente en 127.0.0.1 vía adb reverse. -->
+    <application android:networkSecurityConfig="@xml/account_debug_network_security" />
+</manifest>
